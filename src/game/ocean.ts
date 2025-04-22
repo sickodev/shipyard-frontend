@@ -1,20 +1,21 @@
+import { waterVertexShader, waterFragmentShader } from '../shaders/waterShader';
 import * as THREE from 'three';
 import { scene } from '../core/scene';
-
+// Ocean tile size and setup
 const tileSize = 700;
 const segments = 32;
-
 const oceanGeometry = new THREE.PlaneGeometry(tileSize, tileSize, segments, segments);
-const oceanMaterial = new THREE.MeshStandardMaterial({
-  color: 0x1e90ff,
-  roughness: 0.6,
-  metalness: 0.3,
-  flatShading: true,
+
+const oceanMaterial = new THREE.ShaderMaterial({
+  vertexShader: waterVertexShader,
+  fragmentShader: waterFragmentShader,
+  uniforms: {
+    uTime: { value: 0 },  // Initial time value
+  },
   side: THREE.DoubleSide,
 });
 
 const tiles: THREE.Mesh[] = [];
-
 const tileRange = 5;
 
 for (let x = -tileRange; x <= tileRange; x++) {
@@ -27,10 +28,11 @@ for (let x = -tileRange; x <= tileRange; x++) {
   }
 }
 
-// Add soft ambient ocean light
+// Add ambient ocean light
 const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x1e90ff, 0.6);
 scene.add(hemiLight);
 
+// Update ocean animation and position based on time
 function updateWave(tile: THREE.Mesh, time: number) {
   const geometry = tile.geometry as THREE.PlaneGeometry;
   const position = geometry.attributes.position;
@@ -56,5 +58,7 @@ export function updateOcean(playerX: number, playerZ: number, time: number) {
 
     updateWave(tile, time);
   }
-}
 
+  // Update the time uniform for the shaders
+  oceanMaterial.uniforms.uTime.value = time;
+}
